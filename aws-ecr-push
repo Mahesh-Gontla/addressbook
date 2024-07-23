@@ -1,0 +1,33 @@
+pipeline{
+    agent any
+    tools{
+        maven 'Maven'
+    }
+    environment{
+        cred = credentials('aws-cred')
+    }
+    stages{
+        stage("checkout stage"){
+            steps{
+                checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Mahesh-Gontla/addressbook.git']])
+            }
+        }
+        stage("maven build"){
+            steps{
+                sh 'mvn package'
+            }
+        }
+        stage("docker build"){
+            steps{
+                sh 'docker build -t 977612098431.dkr.ecr.us-east-1.amazonaws.com/repo-by-mahesh:${BUILD_NUMBER} .'
+            }
+        }
+        stage("ecr push"){
+            steps{
+                sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 977612098431.dkr.ecr.us-east-1.amazonaws.com'
+                sh 'docker push 977612098431.dkr.ecr.us-east-1.amazonaws.com/repo-by-mahesh:${BUILD_NUMBER}'
+            }
+        
+        }
+    }
+}
